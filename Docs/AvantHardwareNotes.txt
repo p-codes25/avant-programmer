@@ -1,0 +1,32 @@
+The controller on the Avant Stellar's PCB is an Atmel AT89c52.
+
+It's an 8051-based microcontroller.
+
+"Compatible with MCS-51 products."
+
+8KB built-in flash.
+
+1000 write/erase cycles.
+
+256 byte internal RAM.
+
+1E 52 FF are the device ID bytes that Xgecu reports... that means Vpp = 12V
+
+Now for the bad news...
+
+The flash memory on the 89c52 sppears to be locked :(  The chip does not provide
+any way to read the status of the lock bits :(
+
+And, trying to read the flash memory returns only FF bytes, which is supposed
+to be the behavior for a locked chip :(
+
+It also has an RIC FM24C16-P serial NVRAM chip...
+
+https://www.farnell.com/datasheets/305352.pdf
+
+16Kbits = 2KB size.
+
+That seems to contains the keyboard remapping / macro / options configuration.
+
+See AvantSPILayout.txt for notes on the NVRAM chip's contents.
+
