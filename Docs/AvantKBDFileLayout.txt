@@ -1,0 +1,90 @@
+
+*** NOTES ON THE .KBD KEYBOARD DATA FILE FORMAT ***
+
+Avant software (at least versions 3.10 and 4.0) saves the keyboard configuration
+to a file with a *.kbd extension.
+
+Their DOS software (avantdwn.exe) reads a *.kbd file and sends its programming to
+the keyboard.
+
+I think the 3.10 file format can be read by the 4.0 version, although strangely the
+older file version is larger and contains extra macro slots?  TBD: confirm this...
+and see if a 4.0 file can be read by the 3.10 version...
+
+0000-0002:	'KBD' (4B 42 44)
+0003-0004:	WORD - Key repeat rate: 00 = 1/sec, 01 = 4/sec, etc... 08 = 30/sec... 0C = 300/sec!
+0005-0006:	WORD - Key repeat delay: 01 = 0.25s, 02 = 0.50s, 03 = 0.75s, etc... 6 = 1.50s, 7 = 1.85s (?)
+0007-0008:	WORD? Key validation time: 0 = 0.008 sec, 1 = 0.400 sec, 2 = 1.000 sec - ONLY USE 0!!!
+0009:		0x01 = Left alt 'sticky' mode
+		0x02 = Left alt 'locked' mode (with 0x01)
+		0x10 = Left shift 'sticky' mode
+		0x20 = Left shift 'locked' mode (with 0x10)
+		0x40 = Left ctrl 'sticky' mode
+		0x80 = Left ctrl 'locked' mode (with 0x40)
+000A:		Always 0 (or high byte of left special-key flags WORD)
+000B:		0x01 = Right alt 'sticky' mode
+		0x02 = Right alt 'locked' mode (with 0x01)
+		0x10 = Right shift 'sticky' mode
+		0x20 = Right shift 'locked' mode (with 0x10)
+		0x40 = Right ctrl 'sticky' mode
+		0x80 = Right ctrl 'locked' mode (with 0x40)
+000C:		Always 0 (or high byte of right special-key flags WORD)
+000D:		0 if comma/period lock off, 1 if on
+000E-000F:	Zero / unknown
+
+At 0013 through 0213 are they key mappings: 128 (80h) 4-byte entries:
+
+00:	Index of key that this key slot is mapped to.
+01:	?
+02:	Flags: 1 = Shift, 2 = Ctrl, 4 = Alt, 8 = No-Repeat
+03:	
+
+Key slots are below (these give the slot # for each key in its original,
+unmapped location):
+
+	+0	+1	+2	+3	+4	+5	+6	+7
+===================================================================
+00-07:	n/a	n/a	F9	F7	F5	F3	F1	F11
+08-0F:	n/a	n/a	F10	F8	F6	F4	F2	F12
+10-17:	Num0	Num2	n/a	n/a	CapsLk	Tab	` (Bq)	Esc
+18-1F:	Num.	Num3	n/a	Z	A	Q	1	SF1
+20-27:	NumEnt	Num4	n/a	X	S	W	2	SF2
+28-2F:	PrtSc	Num5	n/a	C	D	E	3	SF3
+30-37:	ScrLk	Num6	n/a	V	F	R	4	SF4
+38-3F:	Pause	Num=	Space	B	G	T	5	SF5
+40-47:	Num-	Num+	Num1	\	Enter	]	=	SF12
+48-4F:	Num*	Num9	BackSp	Menu	' (Qu)	[	-	SF11
+50-57:	Num/	Num8	Up	/	;	P	0	SF10
+58-5F:	NumLk	Num7	Right	.	L	O	9	SF9
+60-67:	PgUp	PgDn	Down	,	K	I	8	SF8
+68-6F:	Home	End	Left	M	J	U	7	SF7
+70-77:	Ins	Del	n/a	N	H	Y	6	SF6
+78-7F:	RCtrl	RShift	RWin	RAlt	LAlt	LWin	LShift	LCtrl
+
+Then come the macro entries, which are variable-sized.
+
+The keyboard supports up to 24 macros, with 69 keystrokes each.
+
+But -- the 3.10 software version's .kbd files seem to have 48 macros?
+Did other keyboards have a larger SPI flash chip, maybe?
+
+The macro entries start with:
+
+kk 00 mm FF		kk: key slot # that the macro is assigned to (e.g. 06 = F1)
+			mm: modifiers: 01 = Alt, 04 = Shift, 08 = Ctrl
+			FF = ? It's always there?
+
+Macro name - 14h bytes, but the last character is always a space?  Or is it just not null-terminated?
+
+Then, a WORD number of keystrokes in the macro -- *including* the 81h terminator WORD, followed by WORD key slot #'s indicating the keystrokes in the macro.  The list of keystrokes is terminated by an 81h WORD.
+
+In the macro's keystroke list, these special values may appear:
+	78 = Ctrl down
+	79 = Shift down
+	7B = Alt down
+	F8 = Ctrl up
+	F9 = Shift up
+	FB = Alt up
+
+	? = Delay
+	? = "Expand"
