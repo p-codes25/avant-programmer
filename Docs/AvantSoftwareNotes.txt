@@ -47,6 +47,11 @@ provided by CVT over the years, for programming the Avant keyboards:
 	on a key position that is mapped to one of those keys (Shift, Ctrl or Alt),
 	regardless of those keys' original positions on the keyboard.
 
+None of these versions can work inside a virtual machine (e.g. VMWare), because (at
+least on VMWare Workstation, where I tried running my own software), only the 'echo'
+(0xEE) keyboard command seems to work; the others do not, probably because VMWare is
+emulating that and not even passing commands to the i8042 or the keyboard...
+
 Searching the web found a few people mentioning this software:
 
 Dmitry Brant:
