@@ -1,0 +1,84 @@
+*** CVT AVANT KEYBOARD SOFTWARE ***
+
+There appear to be at least 3 different major versions of software that were
+provided by CVT over the years, for programming the Avant keyboards:
+
+1. AVANTDWN.EXE - DOS program, 16-bit of course, communicates via direct port I/O
+	to the i8042 keyboard controller; can only send keyboard configuration to
+	the keyboard (what they call "download") -- it can't read the keyboard
+	("upload") as far as I know...
+
+	This will not run in a Windows 95/98/Me DOS window -- Windows 9x seems to
+	block any DOS software's attempt at turning off scan code translation in
+	the i8042 controller.  It also won't run in any NT-series Windows version's
+	DOS window, for similar reasons.
+
+2. Version 3.10 - 16-bit Windows, avantps2.exe for use with a PS/2 mouse, and
+	avantser.exe for use with a serial mouse.
+
+	This version runs under Windows 95/98/Me and can read ("upload") and
+	write ("download") the keyboard configuration.  It uses a Win9x VxD to
+	do the actual port I/O.  I think it also can run under Windows 3.x using
+	direct port I/O from their interface DLL (IFVBDRV.DLL) although I don't
+	have an OS to test that right now.
+
+	The U/I is a little clunky -- to remap a key, you click on it; it turns
+	red to indicate it's selected (unlike the 4.0 version which highlights
+	all the mapped keys in red).  Then you can change the mapping or modifiers,
+	and you have to click Accept or else it will toss your changes as you
+	edit each key!
+
+3. Version 4.0 (dated 2002-2003) - Avant.exe - 32-bit, runs on Windows 2000/XP and
+	uses two replacement drivers (i8042prt.sys and kbdclass.sys) to talk to the
+	keyboard.  These drivers probably don't work on later 32-bit Windows
+	versions, and certainly won't work on any 64-bit Windows.
+
+	It seems as though they took the DDK i8042prt.sys and kbdclass.sys projects
+	and modified them, rather than using a keyboard filter driver.
+
+	In this version, to edit key mappings, you double-click on the key and it
+	brings up a dialog that lets you select the key to map to, plus the
+	available modifiers.  Unfortunately, the dialog combo box selections do not
+	indicate the currently-mapped key.  But, you can view the current key mapping
+	in the main window by clicking on a key (you have to be in Remap mode for the
+	mapped key to appear).  Most keys have Shift, Ctrl and Alt modifiers,
+	but the Shift, Ctrl, Alt and maybe other keys themselves, have 'sticky'
+	and other options.  The Shift/Ctrl/Alt modifiers are available when you click
+	on a key position that is mapped to one of those keys (Shift, Ctrl or Alt),
+	regardless of those keys' original positions on the keyboard.
+
+Searching the web found a few people mentioning this software:
+
+Dmitry Brant:
+
+	https://dmitrybrant.com/2020/05/09/reverse-engineering-a-25-year-old-visual-basic-app
+
+	He actually used a VB decompiler to reverse-engineer Avant's version 3.10
+	software, to figure out the keyboard data file format.
+
+	I took his lead and did something similar in order to RE the software's
+	identification of and communication with the IFVKD.VXD driver.
+
+Greg Lemis:
+
+	http://www.lemis.com/grog/HOWTO/Avant-Stellar.php
+
+Kari Eveli:
+
+	https://www.ifixit.com/Answers/View/252605/Help+me+get+Avant+Stellar+Keyboard+to+work+in+Windows+7
+
+	He apparently provided the old Avant docs and software to Greg above.
+
+*** ANALYSIS OF VERSION 3.10 ***
+
+This version uses a VxD called ifvkd.vxd.
+
+The device ID for the VXD is 0x30B4.
+
+In the DLL, $CALL_M_L(0, 1) gets DLL version...
+
+It's checking GetWinFlags() for the WF_ENHANCED bit, to decide whether to
+call the VxD via int 2fh, or do something else (direct keyboard I/O in the
+DLL?)  So, this library probably supports 16-bit Windows 3.x as well as
+supporting 32-bit VxD-based calls on Win95/98/Me.
+
