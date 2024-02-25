@@ -1,0 +1,169 @@
+
+Notes on PS/2 keyboard port direct I/O:
+
+From Chapter 8 of the PDF/XPS version of The Undocumented PC by Fank van Gilluwe,
+archived here:
+
+	https://archive.org/details/The_Undocumented_PC_Second_Edition_Frankvan_Gilluwe
+
+That chapter has a bunch of DOS assembly language samples for programming the keyboard
+hardware as well.
+
+Port 60h - send/receive data to/from keyboard
+Port 61h - status
+Port 64h - send commands / receive status to/from PC's 8042 controller
+
+Standard keyboard -> motherboard data byte values (scan codes and other responses):
+
+00 = Overrun (same as FF but for different scan code sets?) or parity error?
+AA = Self-test OK
+E0 = Extended scan code (one more byte follows)
+EE = Echo, response to EE echo command
+F0 = Key-up (followed by scan code of key that was released), aka "Break Prefix"
+F1 = Password not installed (after command A4) in some systems
+FA = Acknowledgement (send by keyboard in response to commands except Echo and Resend)
+FC = Self-test failed / mouse transmit error?
+FD = Internal failure detected
+FE = Resend (keyboard received a command that was invalid)
+FF = Overrun (same as 00 but for different scan code sets?) or parity error?
+
+Standard commands that can be sent from the motherboard (i8042) to some/all keyboards:
+
+D1 = Control A20 state, reset, other things?
+D4 = Prefix for sending a byte to the mouse
+ED = Set keyboard LEDs (following byte is 0x04 for Caps Lock | 0x02 for Num Lock | 0x01 for Scroll Lock)
+EE = Echo
+F2 = Get keyboard ID from the keyboard (only on certain keyboard, e.g. IBM Japanese ones)
+F4 = Enable keyboard
+F5 = Set defaults and disable keyboard
+F6 = Reset keyboard to defaults (but doesn't disable it)
+FE = Resend?
+FF = Reset keyboard
+
+Commands sent by CVT Avant software to the keyboard:
+
+Standard commands:
+
+* EE = Echo, keyboard returns an EE byte
+
+The rest of the commands seem to be custom Avant commands sent to the keyboard:
+
+Keyboard data-reading commands:
+
+* EB = Get keyboard model (Omnikey/Avant specific)
+
+	- Stellar returns 17h
+	- Prime returns [TBD - unknown]
+	- Clone keyboard returns FEh (error?)
+	- Omnikey/102 returns FAh (just an ACK?)
+
+	Interestingly, an Omnikey seems to respond to some programming commands too, but not
+	the same codes as the Avant uses?  One set of bytes I sent to my Omnikey, resulted in
+	the key-validation time getting set to a long value, so I had to power-cycle the
+	keyboard to make it usable again... needs more testing!
+
+	From the decompiled VB code, regarding the keyboard model value:
+
+	- Low 4 bits are 0 if there is no keyboard memory, nonzero if it has memory; 0x7
+		might represent the amount of memory it has?
+	- High 4 bits (0x1) are an index into a byte table which indicates 24 macros are supported,
+		apparently.  The docs state 24 macros are supported.
+	- High 4 bits (0x1) are also an index into another byte table which indicates 292...
+		it looks like it's being used as the max macro length, maybe?
+		But that equals 7KB for 24 macros, more than the 2K SPI RAM in my Stellar...
+
+	Were there other models or versions with more memory / support for more macros?
+
+The following keyboard byte commands are listed in the order in which the version 3.10 software
+generates them, when performing an 'upload' (reading programming data from the keyboard):
+
+* D6 - Begin read-programming mode.  Receives FA (ack) back.  Keyboard lights all start blinking.
+* DD - Read keyboard repeat delay and rate.  High 4 bits = delay, low 4 bits = repeat rate.
+* DB - I'm guessing this reads the key validation time value, but it always comes back 0 --
+	the keyboard doesn't save or return it?  It does work when you send it though...
+* DA - Reads the comma/period lock flag (keyboard sends back 0x00 = off, 0x01 = on)
+* DF - This is sent twice: the first DF request reads special key flags for the *right* keys
+	(shift, ctrl, alt); and the second DF request reads the special key flags for the *left*
+	keys.  This is the opposite order from the E8 values for setting these flags!
+	But the values are the same within each byte.
+
+* E0 - Get keyboard mapping entry; gets 0xFA back;
+	- After the E0, send the one-byte key slot index, receive key mapping entry byte
+		indicating the key slot that it's mapped to.
+	- Send the key slot index again, receive the key flags (shift, ctrl, alt, no-repeat).
+
+	- Repeat the E0 sequence for key slots 0x00 - 0x7F.
+
+* E9 - Read macro data; gets 0xFA back...
+	For an unused macro slot:
+	- Send one-byte macro index (0x00 - 0x17), receive 0x81
+	- Send macro index again, receive 0x81 again
+
+	For a used macro slot:
+	- Send macro index, receive mapped key slot # for the macro (0x00 - 0x7F or so)
+	- Send macro index again, receive macro modifier flags (shift, ctrl, alt, ?)
+
+	- Send E1 - Read macro keystroke list. Each send of E1 receives the next macro
+		key slot # in sequence, with 0x82 indicating the end of the sequence.
+		It does *not* get the 0x81 back here!
+
+	- Repeat E9/E1 sequence for macro slots 0x00 to 0x17 (24 decimal entries)
+
+* E6 - End read/write programming mode. Receives FA (ack) back.  Keyboard lights all stop blinking.
+
+Keyboard programming commands... these are listed in the order in which they occur in the
+version 3.10 software's "download" function (write programming to keyboard):
+
+* E7 - Begin write-programming mode.  Gets FA (ack) back.  Keyboard lights all start blinking.
+
+* E4 - set key repeat delay & speed; high 4 bits are delay (1 = 0.25 sec, 2 = 0.50 sec, etc.)
+	and low 4 bits are repeat rate.  E.g.:
+
+	2E = 0.50 sec / 20kps
+	0F = 0 sec / 300kps
+	1B = 0.25 sec / 20kps
+
+* E3 - set key validation time: 0 = 0.008, 1 = 0.4 sec, 2 = 1.0 sec, 3 = 1.850 sec.  Generally
+	do *not* use anything other than 0, as it makes the keyboard hard to use!
+
+* EC - set comma/period lock: 0x00 for off, 0x01 for on
+
+* E8 - set special key modes; gets FA back.
+	Next, send left special keys flags (0x01 = left alt sticky, etc.)  Gets FA back.
+	Next, send right special keys flags (0x01 = right alt sticky, etc.)  Gets FA back.
+
+	The left/right flags are in the opposite order from how they are read via the DF command!
+
+* E5 - program macro entry; receives FA (ack).
+
+	For an empty macro slot:
+
+	Next, send macro index (0x00 - 0x17); receive FA.
+	Next, send 0x81, receive FA (mapped key slot #).
+	Then, send another 0x81, receive FA (macro modifier flags).
+
+	Next, send E2 to send the macro keystrokes. Receive FA.
+	Send 0x81, receive FA, send 0x82, receive FA.
+
+	For a used macro slot:
+
+	Send macro index (0x00 - 0x17); receive FA.
+	Send macro mapped key slot (0x00 - 0x7F); receive FA.
+	Send macro modifiers byte, receive FA.
+
+	Send E2, receive FA.
+	Send each macro keystroke, receive FA.
+	Send 0x81, receive FA, send 0x82, receive FA to terminate the macro keystroke list.
+
+	Repeat the E5 - E2 sequence for each macro slot, 0x00 - 0x17.
+
+* EA - begin programming key mappings; followed by 3-byte groups:
+
+	+00 = key slot
+	+01 = modifiers
+	+02 = key slot that the key is mapped to
+
+	Send FF to exit key programming mode; receives FA (ack) back.
+
+* E6 - End read/write programming mode. Receives FA (ack) back.  Keyboard lights all stop blinking.
+
