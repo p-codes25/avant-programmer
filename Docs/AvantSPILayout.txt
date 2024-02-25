@@ -1,0 +1,39 @@
+
+Notes on the layout of the 2K SPI flash RAM chip (FM24C16) onboard the CVT Avant keyboards:
+
++00	Signature? Has 0xAA55 on my keyboard.
++02	0x05 = ?
++03	0x20 = ?
++04	0x01 = ?
++05	0x00 or 0x01 = Comma/period lock flag, I think
++06	0x00 = ?
++07	0x00 = ?
++08	0x00 = ?
++09	0x00 = ?
++0A	0x00 = ?
++0B	0x00 usually, or 0x02 for Alt (Ctrl?) Locked?  Right special key flags, I think
++0C	0x00 = ?
++0D	0x00 usually, or 0x10 for Shift locked -- left special key flags, I think
++0E	0x00 = ?
++0F	0x00 = ?
+
++10	128 bytes of key slot mapping.  Each byte gives the key slot index to which
+	that key slot is mapped.
+
++90	Seems to have key mapping modifiers, I'm guessing?  This is only 64 bytes,
+	which implies 4 bits per key slot.  TBD: verify, document bit positions.
+
++D0	I'm guessing these are the key slot indexes for each of 48 macros.  There
+	are 48 bytes here, which means the keyboard supports 48 macros?  However,
+	there are only room for 24 macros * 69 bytes each in the 2K flash chip...
+
++100	WORD values, all 0x0081 in my version.  Something related to macros???
+
++130	Macro definitions - apparently each one is 0x46 bytes, which allows for 69 macro
+	keystrokes plus the 0x81 terminator entry for each macro.  Each macro entry
+	starts with an 0x81 if it is unused; otherwise it contains the list of key slot #
+	for the keystrokes in the macro, followed by the 0x81 terminator byte.
+	The macro definitions end at 0x7BF.
+
++7C0	Unused?
+
