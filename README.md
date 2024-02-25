@@ -14,7 +14,7 @@ There are several reasons I decided to put this software together:
 
 - It seemed like fun (and was!);
 
-- It seemed like a good stepping stone to figuring out how to support programming these keyboards via a USB port (but I have not tacked that project yet).
+- It seemed like a good stepping stone to figuring out how to support programming these keyboards via a USB port (but I have not tackled that project yet).
 
 I'm providing this code for informational purposes for anyone who wants to understand these keyboards' communication protocol, or who wants to know about writing Windows keyboard filter drivers.
 
