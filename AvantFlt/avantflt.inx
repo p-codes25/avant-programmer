@@ -1,0 +1,147 @@
+; avantflt.inf
+;
+; Installation inf for the Filter Driver For Programming Avant Keyboards
+;
+; Original template: (c) Copyright 1999 Microsoft
+;
+
+[Version]
+Signature="$Windows NT$"
+Provider=%DDK_Ex%
+ClassGUID={4D36E96B-E325-11CE-BFC1-08002BE10318}
+Class=Keyboard
+; Uncomment the following line when you have a valid catalog file.
+;         If you use bogus catalog file installation will fail.
+; Ignore the error from chkinf.
+;CatalogFile=KmdfSamples.cat
+
+DriverVer=10/01/2023, 1.0.0.0
+
+[DestinationDirs]
+DefaultDestDir   = 12
+
+;
+; Driver information
+;
+
+[Manufacturer]
+%DDK_Ex%   = DDK_Ex.Mfg,NT$ARCH$
+
+; For Win2K
+[DDK_Ex.Mfg]
+%DDK_Ex% = avantflt, *PNP0BAAD
+
+; For XP and above
+[DDK_Ex.Mfg.NT$ARCH$]
+%DDK_Ex% = avantflt, %*PNP0300, %*PNP0301, %*PNP0302, %*PNP0303, %*PNP0304, %*PNP0305, %*PNP0306, %*PNP0309, %*PNP030a, %*PNP030b, 
+
+;
+; General installation section
+;
+
+[avantflt.NT]
+; perform port related actions from keyboard.inf
+Include=keyboard.inf
+Needs=STANDARD_Inst
+
+; Copy the driver over
+CopyFiles=avantflt.CopyFiles
+
+
+;
+; File sections
+;
+
+[avantflt.CopyFiles]
+avantflt.sys
+
+
+;
+; Service Installation
+;
+
+[avantflt.NT.Services]
+AddService =avantflt,  , avantflt_Service_Inst
+; Install the port driver and mouclass from keyboard.inf
+Include=keyboard.inf
+Needs=STANDARD_Inst.Services
+
+[avantflt_Service_Inst]
+DisplayName    = %avantflt.SvcDesc%
+ServiceType    = 1                  ; SERVICE_KERNEL_DRIVER
+StartType      = 3                  ; SERVICE_DEMAND_START
+ErrorControl   = 0                  ; SERVICE_ERROR_IGNORE
+LoadOrderGroup = Keyboard Port
+ServiceBinary  = %12%\avantflt.sys
+
+[avantflt.NT.HW]
+; Add the device upper filter
+AddReg = avantflt.HW.AddReg
+
+; run the directives need by the port driver
+Include=keyboard.inf
+Needs=STANDARD_Inst.HW
+
+[avantflt.HW.AddReg]
+HKR,,"UpperFilters",0x00010000,"avantflt"
+
+
+;
+; Source file information
+;
+
+
+[SourceDisksNames]
+1 = %DiskId1%,,,
+
+[SourceDisksFiles]
+avantflt.sys = 1,,
+
+;
+;--- avantflt Coinstaller installation ------
+;
+
+[DestinationDirs]
+avantflt_CoInstaller_CopyFiles = 11
+
+[avantflt.NT.CoInstallers]
+AddReg=avantflt_CoInstaller_AddReg
+CopyFiles=avantflt_CoInstaller_CopyFiles
+
+[avantflt_CoInstaller_AddReg]
+HKR,,CoInstallers32,0x00010000, "WdfCoInstaller$KMDFCOINSTALLERVERSION$.dll,WdfCoInstaller"
+
+[avantflt_CoInstaller_CopyFiles]
+WdfCoInstaller$KMDFCOINSTALLERVERSION$.dll
+
+[SourceDisksFiles]
+WdfCoInstaller$KMDFCOINSTALLERVERSION$.dll=1 ; make sure the number matches with SourceDisksNames
+
+[avantflt.NT.Wdf]
+KmdfService = avantflt, avantflt_wdfsect
+[avantflt_wdfsect]
+KmdfLibraryVersion = $KMDFVERSION$
+
+
+
+[Strings]
+
+;
+; Non-Localizable Strings
+;
+
+REG_SZ         = 0x00000000
+REG_MULTI_SZ   = 0x00010000
+REG_EXPAND_SZ  = 0x00020000
+REG_BINARY     = 0x00000001
+REG_DWORD      = 0x00010001
+SERVICEROOT    = "System\CurrentControlSet\Services"
+
+;
+; Localizable Strings
+;
+
+DiskId1 = "Filter Driver For Programming Avant Keyboards Disk #1 (Keyboard)"
+DDK_Ex = "Filter Driver For Programming Avant Keyboards"
+avantflt.SvcDesc="Filter Driver For Programming Avant Keyboards"
+
