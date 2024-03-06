@@ -20,7 +20,12 @@ I'm providing this code for informational purposes for anyone who wants to under
 
 As far as actually using this software, there are a couple of major caveats:
 
-1. Actually programming an Avant keyboard must be done on a PC that has a physical PS/2 keyboard port (a combo PS/2 keyboard/mouse port should work too).  It won't work on an Avant keyboard connected through a USB-to-PS/2 converter, and it won't work in a VM guest, as far as I've found, because apparently hypervisors (at least VMWare Workstation) don't virtualize the i8042 controller chip fully enough for this software to do what it needs to do.
+1. Actually programming an Avant keyboard must be done on a bare-metal PC that has a physical PS/2 keyboard port (a combo PS/2 keyboard/mouse port should work too).  It won't work on an Avant keyboard connected through a USB-to-PS/2 converter, and it won't work in a VM guest, as far as I've found, because apparently hypervisors (at least VMWare Workstation) cannot virtualize the i8042 controller chip fully enough for this software to do what it needs to do.
 
 2. In order to use the keyboard filter, either your system must be booted in 'test signing mode' where Windows does not verify the root code-signing certificate of drivers (and this is *not* recommended on security principles), or else you must build the driver yourself and have it code-signed by a company that writes device drivers.  This is all due to Microsoft's more stringent driver signing requirements that came into effect in the late 2010s or so.  It effectively takes away the ability of home/hobbyist driver writers to produce signed drivers that will run on their own systems :(
 
+Plus a couple more minor caveats:
+
+3. I've only built and run the software on Windows 7 and 10.  It should work on Vista, but you might need to build it with the Vista WDK.
+
+4. It's a little bit of a pain to install the driver -- you have to replace the default PS/2 keyboard driver with this one using Device Manager, and reboot.  This is a limitation of Windows' i8042prt.sys driver -- it cannot dynamically stop and start.
