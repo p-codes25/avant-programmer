@@ -1,14 +1,14 @@
-AvantFlt
+# AvantFlt
 
 Keyboard filter kernel-mode-driver for Windows 7 and later (possibly Vista too) 32-bit or 64-bit versions, for programming Avant keyboards.
 
 This was based on the WDK kbfiltr sample driver from the Win7 WDK.
 
-Prerequisites:
+## Prerequisites
 
 - WDK for Windows 7 (WDK version 7600.16385.1) installed (the driver should work with later WDK versions, but I haven't tested any).
 
-To build the driver:
+## Building the Driver
 
 - Open a WDK x86 or x64 checked or free build environment window, as desired;
 
@@ -24,7 +24,7 @@ That produces the base driver binary, not code-signed.  For 64-bit Windows opera
 
 2. Using the Microsoft driver signing portal, which requires an EV certificate issued to a company for use in Microsoft's driver signing process.  This is not feasible for most individual hobbyists, which is unfortunate but it's Microsoft's policy.
 
-== Test-signing the driver ==
+## Test-Signing the Driver
 
 If you want to use the test-signing method (again, NOT recommended, as it's a security risk for your system), use these steps:
 
@@ -60,7 +60,7 @@ If you want to use the test-signing method (again, NOT recommended, as it's a se
 
 Now, you can put your system into test-signing mode, and you will be able to install the driver.
 
-== Installing the driver ==
+## Installing the Driver
 
 I used the manual method of installing the device driver through Device Manager; Microsoft also has
 automatic deployment methods here:
@@ -81,3 +81,4 @@ But I haven't tried those.  What I did was:
 10. Once the driver is installed, you'll be prompted to reboot the system.  Once you do, then Device Manager
 	should show under Keyboards, the "Filter Device For Programming Avant Keyboards".
 
+Once the driver is installed and running, you can use the AvantCmd utility to read/write your Avant keyboard's programming!
