@@ -8,4 +8,3 @@ int StartDisableScanCodeTranslation();
 int DisableScanCodeTranslationStep3(BYTE *pcCommandByte);
 int SetCommandBytePart1(BYTE cCommandByte);
 int SetCommandByte(BYTE cCommandByte);
-
