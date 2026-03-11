@@ -2,7 +2,9 @@ This project consists of a Windows utility, driver and documentation for program
 
 General information about these keyboards, their history, hardware, software, etc. is documented on Deskthority:
 
-https://deskthority.net/wiki/CVT_Avant_Stellar
+https://deskthority.net/wiki/CVT_Avant_Stellar (original link - now dead?)
+
+https://wiki.themk.org/index.php/CVT_Avant_Stellar (backup - online as of 03/2026)
 
 Why does anyone still use these old keyboards?  Well, aside from their solid build and nice clicky mechanical keyswitches, these keyboards have the rare ability to have the keyboard layout (i.e. key-to-scancode mappings) changed and saved permanently to an EEPROM (or flash memory) chip built into the keyboard.  You can also program macros and other settings to this permanent memory, and the programming is done via DOS/Windows software that CVT provided.
 
